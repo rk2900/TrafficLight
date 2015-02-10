@@ -7,7 +7,7 @@ import java.util.Map;
 
 import BasicOps.FileOps;
 import DataFormat.TrafficMonitor;
-import Model.Model;
+import Model_old.Model;
 
 public class GraderWrapper {
 	private List<String> flows;

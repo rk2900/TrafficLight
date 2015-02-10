@@ -3,10 +3,10 @@ import java.io.InputStreamReader;
 
 import BasicOps.Debug;
 import DataFormat.TrafficLightMap;
-import Model.AllGreen;
-import Model.Model;
-import Model.ScoreBased;
-import Model.Straight;
+import Model_old.AllGreen;
+import Model_old.Model;
+import Model_old.ScoreBased;
+import Model_old.Straight;
 import Simulator.GraderCore;
 import Simulator.GraderWrapper;
 import Statics.SingleCost;

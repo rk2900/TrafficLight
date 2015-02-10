@@ -10,7 +10,7 @@ import BasicOps.FileOps;
 import DataFormat.TrafficLightMap;
 import DataFormat.TrafficLightStatus;
 import DataFormat.TrafficMonitor;
-import Model.Model;
+import Model_old.Model;
 
 public class GraderCore {
 	private Model model;

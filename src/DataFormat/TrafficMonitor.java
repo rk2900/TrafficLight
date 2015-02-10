@@ -11,10 +11,16 @@ import BasicOps.FileOps;
 
 public class TrafficMonitor{
 	protected int[][] traffic;
+	protected int[][][] red;
 	
 	public TrafficMonitor(TrafficMonitor traffic){
 		this.traffic=new int[60][4];
+		this.red=new int[60][60][4];
 		for (int i=0;i<60;i++) this.traffic[i]=traffic.traffic[i].clone();
+		for (int i=0;i<60;i++)
+			for (int j=0;j<60;j++)
+				for (int dir=0;dir<4;dir++)
+				red[i][j][dir]=0;
 	}
 	
 	public void addTraffic(String dst,String src,int v){
@@ -43,6 +49,11 @@ public class TrafficMonitor{
 	public TrafficMonitor(String data, 
 			TrafficLightStatus status, TrafficMonitor prev){
 		traffic=new int[60][4];
+		red=new int[60][60][4];
+		for (int i=0;i<60;i++)
+			for (int j=0;j<60;j++)
+				for (int dir=0;dir<4;dir++)
+					red[i][j][dir]=prev.red[i][j][dir];
 		
 		if (data.contains("\t"))
 			data=data.split("\t")[2];
@@ -92,6 +103,12 @@ public class TrafficMonitor{
 				addTraffic(TrafficLightMap.getNextRoad(inter,src,1), inter, left_flow);
 				addTraffic(TrafficLightMap.getNextRoad(inter,src,2), inter, straight_flow);
 				addTraffic(TrafficLightMap.getNextRoad(inter,src,3), inter, right_flow);
+				
+				for (int dir=1;dir<4;dir++){
+					if (status.getStatus(inter, src, dir)==0)
+						red[inter][src][dir]++;
+					else red[inter][src][dir]=0;
+				}
 			}
 		}
 	}
