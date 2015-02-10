@@ -125,7 +125,7 @@ public class TrafficMonitor{
 	
 	public String getVisual(TrafficLightStatus status){
 		StringBuilder sb=new StringBuilder();
-		List<String> visual=FileOps.LoadFilebyLine("visualmap.txt");
+		List<String> visual=FileOps.LoadFilebyLine("data/visualmap.txt");
 		Map<Integer, Integer> pos=new HashMap<Integer,Integer>();
 		for (int i=0;i<visual.size();i++)
 			for (int j=0;j+1<visual.get(i).length();j++){
