@@ -1,9 +1,11 @@
 package Statics;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 
 import org.junit.Test;
@@ -32,7 +34,7 @@ public class FlowCalculator {
 			for(int i=0; i<1680; i++) {
 				daySum[fileCnt] += flowSum[fileCnt][i];
 			}
-			
+			reader.close();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -60,6 +62,23 @@ public class FlowCalculator {
 		initSum();
 		for(int i=0; i<7; i++) {
 			System.out.println(getSum(i));
+		}
+		
+		BufferedWriter bw;
+		try {
+			bw = new BufferedWriter(new FileWriter(new File("data/flow_detail.csv")));
+			for(int i=0; i<7; i++) {
+				StringBuilder sb = new StringBuilder();
+				for(int j=0; j<1680; j++) {
+					sb.append(flowSum[i][j]);
+					sb.append(",");
+				}
+				bw.write(sb.toString());
+				bw.newLine();
+			}
+			bw.close();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 	
