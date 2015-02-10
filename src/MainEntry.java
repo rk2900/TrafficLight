@@ -3,10 +3,9 @@ import java.io.InputStreamReader;
 
 import BasicOps.Debug;
 import DataFormat.TrafficLightMap;
-import Model_old.AllGreen;
-import Model_old.Model;
-import Model_old.ScoreBased;
-import Model_old.Straight;
+import Model.PredictBased;
+import Model.Model;
+import Model.PredictBased;
 import Simulator.GraderCore;
 import Simulator.GraderWrapper;
 import Statics.SingleCost;
@@ -27,7 +26,7 @@ public class MainEntry {
 		
 		TrafficLightMap.init();
 		
-		Model model=new Straight();
+		Model model=new PredictBased();
 		model.init();
 		
 		if (local){
