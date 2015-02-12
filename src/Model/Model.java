@@ -29,12 +29,24 @@ public abstract class Model implements ModelInterface{
 		flow.add(cur);
 		if (round%120==0)
 			traffic=new TrafficMonitor(cur);
-		else traffic=new TrafficMonitor(cur);//,status,traffic);
+		else {
+			TrafficMonitor last=new TrafficMonitor(traffic);
+			traffic=new TrafficMonitor(cur);//,status,traffic);
+			traffic.calcRed(last,status);
+		}
 		updateStatus();
-		hisTraffic.add(traffic);
-		hisStatus.add(status);
+//		hisTraffic.add(traffic);
+//		hisStatus.add(status);
 		round++;
 		return status.toString();
+	}
+	public void openConsecutiveRed(){
+		for (int dst:TrafficLightMap.getAll())
+			for (int src:TrafficLightMap.getIntersect(dst))
+				if (src!=-1)
+				for (int dir=1;dir<4;dir++)
+				if (traffic.getRedCnt(dst, src, dir)>3)
+					status.setStatus(dst, src, dir, 1);
 	}
 }
 

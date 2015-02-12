@@ -13,6 +13,9 @@ public class TrafficMonitor{
 	protected int[][] traffic;
 	protected int[][][] red;
 	
+	public int getRedCnt(int dst,int src,int dir){
+		return red[dst][src][dir];
+	}
 	public TrafficMonitor(TrafficMonitor traffic){
 		this.traffic=new int[60][4];
 		this.red=new int[60][60][4];
@@ -20,7 +23,7 @@ public class TrafficMonitor{
 		for (int i=0;i<60;i++)
 			for (int j=0;j<60;j++)
 				for (int dir=0;dir<4;dir++)
-				red[i][j][dir]=0;
+				red[i][j][dir]=traffic.red[i][j][dir];
 	}
 	
 	public void addTraffic(String dst,String src,int v){
@@ -40,6 +43,48 @@ public class TrafficMonitor{
 			data=data.split("\t")[2];
 		int sum=0;
 		traffic=new int[60][4];
+		red=new int[60][60][4];
+		for (int i=0;i<60;i++)
+			for (int j=0;j<60;j++)
+				for (int dir=0;dir<4;dir++)
+					red[i][j][dir]=0;
+		
+		for (String s:data.split(";")){
+			String[] sep=s.split(",");
+			addTraffic(sep[0],sep[1],Integer.valueOf(sep[2]));
+		}
+	}
+	
+	public void calcRed(TrafficMonitor prev,TrafficLightStatus status){
+		for (int i=0;i<60;i++)
+			for (int j=0;j<60;j++)
+				for (int dir=0;dir<4;dir++)
+					red[i][j][dir]=prev.red[i][j][dir];
+		
+		for (int inter:TrafficLightMap.getAll()){
+			int[] roads=TrafficLightMap.getIntersect(inter);
+			for (int src:roads) if (src!=-1){
+				for (int dir=1;dir<4;dir++){
+					if (status.getStatus(inter, src, dir)==0){
+						red[inter][src][dir]++;
+					}
+					else red[inter][src][dir]=0;
+				}
+			}
+		}
+	}
+	
+	public TrafficMonitor(String data,TrafficMonitor prev){
+		if (data.contains("\t"))
+			data=data.split("\t")[2];
+		int sum=0;
+		traffic=new int[60][4];
+		red=new int[60][60][4];
+		for (int i=0;i<60;i++)
+			for (int j=0;j<60;j++)
+				for (int dir=0;dir<4;dir++)
+					red[i][j][dir]=prev.red[i][j][dir];
+		
 		for (String s:data.split(";")){
 			String[] sep=s.split(",");
 			addTraffic(sep[0],sep[1],Integer.valueOf(sep[2]));
@@ -50,6 +95,7 @@ public class TrafficMonitor{
 			TrafficLightStatus status, TrafficMonitor prev){
 		traffic=new int[60][4];
 		red=new int[60][60][4];
+		
 		for (int i=0;i<60;i++)
 			for (int j=0;j<60;j++)
 				for (int dir=0;dir<4;dir++)
@@ -66,7 +112,7 @@ public class TrafficMonitor{
 		
 		for (int inter:TrafficLightMap.getAll()){
 			int[] roads=TrafficLightMap.getIntersect(inter);
-			for (int src:roads){
+			for (int src:roads) if (src!=-1){
 				Double[] initTurnRate = {0.2,0.2,0.6};
 				
 				if (TrafficLightMap.getNextRoad(inter, src, 1)==-1) {

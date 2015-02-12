@@ -15,7 +15,7 @@ import DataFormat.TrafficLightMap;
 import DataFormat.TrafficLightStatus;
 import DataFormat.TrafficMonitor;
 
-public class PredictBased extends Model{
+public class PredictBased_v0 extends Model{
 	TrafficMonitor [] traffics;
 	TrafficLightStatus [] allstatus;
 	PenaltyPredictor [] costs;
@@ -48,11 +48,7 @@ public class PredictBased extends Model{
 		traffics=new TrafficMonitor[120];
 		allstatus=new TrafficLightStatus[120];
 		costs=new PenaltyPredictor[120];
-//		loadFlow("data/flow0901.txt");
-		FlowPredictor flowpred=new FlowPredictor();
-		flows=new LinkedList<String>();
-		for (int i=0;i<1680;i++)
-			flows.add(flowpred.query(i));
+		loadFlow("data/flow0901.txt");
 	}
 	
 	private TrafficLightStatus getBaseStatus(TrafficMonitor traffic){
@@ -160,79 +156,70 @@ public class PredictBased extends Model{
 	}
 	
 	private void updateStatus(int t){
-		for (int dst:TrafficLightMap.getAll())
-			for (int src:TrafficLightMap.getIntersect(dst))
-				if (src!=-1){
-					int flow=traffics[t].getTraffic(dst, src);
-					Double[] initTurnRate = {0.2,0.2,0.6};
-					
-					if (TrafficLightMap.getNextRoad(dst, src, 1)==-1) {
-						initTurnRate[1] += initTurnRate[0];
-						initTurnRate[0] -= initTurnRate[0];				
-					}else if (TrafficLightMap.getNextRoad(dst, src, 3)==-1) {
-						initTurnRate[0] += initTurnRate[1];
-						initTurnRate[1] -= initTurnRate[1];
-					}else if (TrafficLightMap.getNextRoad(dst, src, 2)==-1) {
-						initTurnRate[0] += initTurnRate[2]*0.5;
-						initTurnRate[1] += initTurnRate[2]*0.5;
-						initTurnRate[2] -= initTurnRate[2];
-					}
-					
-					int th=20-5*TrafficLightMap.getId(dst, src);
-					
-					int left_through=(int)(th*initTurnRate[0]);
-					int straight_through=(int)(th*initTurnRate[2]);
-					int right_through=(int)(th*initTurnRate[1]);
-					
-					int left_cnt=(int)Math.floor(flow*initTurnRate[0]);
-					int right_cnt=(int)Math.floor(flow*initTurnRate[1]);
-					int straight_cnt=flow-left_cnt-right_cnt;
-					
-					int[] tflow=new int[4];
-					tflow[1]=Math.min(left_cnt, left_through);
-					tflow[2]=Math.min(straight_cnt, straight_through);
-					tflow[3]=Math.min(right_cnt, right_through);
-					
-					for (int dir=1;dir<4;dir++){
-						int nxt=TrafficLightMap.getNextRoad(dst, src, dir);
-						if (nxt==-1) continue;
-						allstatus[t].setStatus(dst, src, dir, 0);
-//						if (traffics[t].getRedCnt(dst, src, dir)==4)
-//							allstatus[t].setStatus(dst, src, dir, 1);
-						if (costs[t].query(nxt, dst)<costs[t].query(dst, src)+1)
-							allstatus[t].setStatus(dst, src, dir, 1);
-						
-//						if ((costs[t].query(nxt, dst)-costs[t].query(dst, src)-1)*tflow[dir]
-//								-flow*Math.sqrt(Math.max(0, traffics[t].getRedCnt(dst, src, dir)-3))
-//								<0)
-//							allstatus[t].setStatus(dst, src, dir, 1);
-					}
+		Random random=new Random();
+		for (int inter:TrafficLightMap.getAll()){
+			int[] roads=TrafficLightMap.getIntersect(inter);
+			int[] light=allstatus[t].getStatus(inter);
+			int[] best=light.clone();
+			double bestCost=calcIntersectCost(t,inter,light);
+			int cnt=0;
+			for (int i=0;i<4;i++)
+				for (int j=0;j<4;j++) if (i!=j&&roads[i]!=-1&&roads[j]!=-1){
+					light[(i<<2)+j]=1;
+					cnt++;
 				}
+			for (int stat=0;stat<(1<<cnt);stat++){
+//				if (random.nextInt(2)!=0) continue;
+				int[] cur=light.clone();
+				int q=stat;
+				
+				for (int i=0;i<4;i++)
+					for (int j=0;j<4;j++) if (i!=j&&roads[i]!=-1&&roads[j]!=-1){
+						cur[(i<<2)+j]=q&1;
+						q/=2;
+					}
+				double v=calcIntersectCost(t,inter, cur);
+				if (v<bestCost){
+					bestCost=v;
+					best=cur.clone();
+				}
+			}
+			allstatus[t].setStatus(inter,best);
+		}
 	}
 	
 	private void updateFlow(int t,String data){
 		curflows[t]=data;
 		traffics[t]=new TrafficMonitor(traffic);
-
-		for (int r=0;r<1;r++){
-			for (int i=t;i<Math.min(120,t+10);i++){
-				updateStatus(i);
-				if (i<119) {
-					traffics[i+1]=new TrafficMonitor(curflows[i+1], allstatus[i], traffics[i]);
-					costs[i].calc(traffics[i+1], allstatus[i+1], costs[i+1]);
+		for (int dst:TrafficLightMap.getAll())
+			for (int src:TrafficLightMap.getIntersect(dst))
+				if (src!=-1){
+					for (int dir=1;dir<4;dir++){
+						int nxt=TrafficLightMap.getNextRoad(dst, src, dir);
+						if (nxt==-1) continue;
+						allstatus[t].setStatus(dst, src, dir, 0);
+						if (traffics[t].getRedCnt(dst, src, dir)==4)
+							allstatus[t].setStatus(dst, src, dir, 1);
+						if (costs[t].query(nxt, dst)<costs[t].query(dst, src)+1)
+							allstatus[t].setStatus(dst, src, dir, 1);
+					}
 				}
-			}
-		}
+//		for (int i=t;i<120;i++){
+//			updateStatus(i);
+//			if (i<119) {
+//				traffics[i+1]=new TrafficMonitor(curflows[i+1], allstatus[i], traffics[i]);
+//				costs[i].calc(traffics[i+1], allstatus[i+1], costs[i+1]);
+//			}
+//		}
 	}
 	@Override
 	public void updateStatus() {
 		if (round%120==0){
 			HourInit();
-//			for (int i=0;i<120;i++) updateFlow(0,curflows[0]);
+			updateFlow(0,curflows[0]);
 		}
-//		for (int i=0;i<50;i++) updateFlow(round%120,flow.get(round));
-		for (int i=0;i<10;i++) 
-			updateFlow(round%120,flow.get(round));
+		
+		updateFlow(round%120,flow.get(round));
 		status=allstatus[round%120];
 //		openConsecutiveRed();
 	}

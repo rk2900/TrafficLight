@@ -29,7 +29,10 @@ public abstract class Model implements ModelInterface{
 		flow.add(cur);
 		if (round%120==0)
 			traffic=new TrafficMonitor(cur);
-		else traffic=new TrafficMonitor(cur);//,status,traffic);
+		else {
+			traffic=new TrafficMonitor(cur);//,status,traffic);
+			traffic.calcRed(hisTraffic.get(round-1),status);
+		}
 		updateStatus();
 		hisTraffic.add(traffic);
 		hisStatus.add(status);
@@ -120,7 +123,8 @@ public abstract class Model implements ModelInterface{
 	public void openAllRight(){
 		for (int dst:TrafficLightMap.getAll())
 			for (int src:TrafficLightMap.getIntersect(dst))
-				status.setStatus(dst, src, 3, 1);
+				if (src!=-1) 
+					status.setStatus(dst, src, 3, 1);
 	}
 }
 

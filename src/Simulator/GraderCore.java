@@ -65,13 +65,9 @@ public class GraderCore {
 		for (int i=round;i<limit;i++){
 			String data=flows.get(i);
 			startRound(i,data);
-			
 			status=new TrafficLightStatus(model.response(traffic.toString()));
-			
 			penalty+=getPenalty(i, traffic, status, data, redcnt, silent, visual);
-			
 			updateRedcnt(redcnt, status);
-			
 			if (silent>0){
 				if (i%silent==0){
 					System.out.println("Overall Penalty : "+penalty);
@@ -109,6 +105,8 @@ public class GraderCore {
 		int stayPenalty=calcStayPenalty(traffic,status);
 		int redPenalty=calcRedPenalty(traffic,redcnt);
 		int rulePenalty=calcRulePenalty(traffic,status);
+		rulePenalty=0;
+		redPenalty=0;
 		penalty=stayPenalty+redPenalty+rulePenalty;
 		if (silent>0){
 			if (round%silent==0){
@@ -118,6 +116,7 @@ public class GraderCore {
 				System.out.println("Rule Penalty : "+rulePenalty);
 				System.out.println("Iteration Penalty : "+(stayPenalty+redPenalty+rulePenalty));				
 				System.out.println("Current Traffic : "+traffic.sum());
+				System.out.println("Penalty per Traffic : "+(stayPenalty+redPenalty+rulePenalty)/Math.pow((double)traffic.sum(),1.5));
 				
 				if (visual) System.out.println(traffic.getVisual(status));
 			}
@@ -130,7 +129,8 @@ public class GraderCore {
 		int penalty=0;
 		for (int inter:TrafficLightMap.getAll()){
 			int[] roads=TrafficLightMap.getIntersect(inter);
-			for (int src:roads){
+			for (int src:roads)
+			if (src!=-1) {
 				Double[] initTurnRate = {0.2,0.2,0.6};
 				
 				if (TrafficLightMap.getNextRoad(inter, src, 1)==-1) {
@@ -179,13 +179,15 @@ public class GraderCore {
 					k=redcnt.get(key);
 				penalty+=(int)Math.ceil(traffic.getTraffic(dst, src)*Math.sqrt(Math.max(k-4, 0)));
 			}
+//		penalty=0;
 		return penalty;
 	}
 	
 	private static int calcRulePenalty(TrafficMonitor traffic,TrafficLightStatus status){
 		int penalty=0;
 		for (int dst:TrafficLightMap.getAll())
-			for (int src:TrafficLightMap.getIntersect(dst)){
+			for (int src:TrafficLightMap.getIntersect(dst))
+			if (src!=-1) {
 				double a=0,b=0,zeta=0.5;
 				if (status.getStatus(dst, src, 2)==1){
 						if (status.getStatus(dst,TrafficLightMap.getNextRoad(dst, src, 1),2)==1
