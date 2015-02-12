@@ -56,9 +56,12 @@ public class FlowPredictor {
 			trafficFlows.add(timeslice.toString());
 		}
 		int round = 0;
+		
+//		FileOps.SaveFile("data/dayFlow", trafficFlows);
 		for(String s: trafficFlows) {
 //			System.out.println(s);
 			this.observe(round, s);
+			round++;
 		}
 	}
 	
